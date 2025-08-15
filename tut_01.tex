@@ -68,7 +68,91 @@
     \end{figure}
   }{}
 \end{frame}
+
+% =============================================================================
+\section{Relational Model Basics}
+% =============================================================================
+
+\begin{frame}{What is the relational model? (in plain words)}
+\begin{itemize}
+  \item Think \textbf{spreadsheets}: each \textbf{table} is a sheet, \textbf{rows} are items, \textbf{columns} are properties.
+  \item Formally, a table is a \textbf{relation}; a row is a \textbf{tuple}; a column is an \textbf{attribute}.
+  \item Each table has a rule for what counts as a valid row: that rulebook is the \textbf{schema}.
+  \item Tables can be \textbf{linked}—a value in one table points to a matching value in another.
+  \item Why it’s powerful: simple structure, \textbf{strong guarantees} (constraints, transactions), and \textbf{declarative} querying (SQL).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Everyday analogy}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.55\linewidth}
+\textbf{Students} table
+\begin{itemize}
+  \item One row per student
+  \item Columns: \texttt{email}, \texttt{name}, \texttt{faculty}, \texttt{department}, \texttt{year}
+  \item \textbf{Primary key} (\texttt{email}) uniquely identifies a student
+\end{itemize}
+\medskip
+\textbf{Books} table
+\begin{itemize}
+  \item One row per book title
+  \item Columns: \texttt{isbn13} (PK), \texttt{isbn10}, \texttt{title}, \texttt{author}, \texttt{publisher}, \texttt{year}
+\end{itemize}
+\end{column}
+\begin{column}{0.45\linewidth}
+\textbf{Copies \& Loans}
+\begin{itemize}
+  \item \texttt{copy(owner, book, copy\_no, ...)}
+  \item \texttt{loan(owner, book, copy\_no, borrowed, returned)}
+  \item \textbf{Foreign keys} connect:
+  \begin{itemize}
+    \item \texttt{copy.owner} $\to$ \texttt{student.email}
+    \item \texttt{copy.book} $\to$ \texttt{book.isbn13}
+    \item \texttt{loan.(owner, book, copy\_no)} $\to$ \texttt{copy}
+  \end{itemize}
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Keys, relationships, and constraints}
+\begin{itemize}
+  \item \textbf{Primary key (PK)}: a column (or set) that uniquely identifies each row.
+  \item \textbf{Foreign key (FK)}: a column whose values must match a PK in another table.
+  \item \textbf{Domain \& CHECK constraints}: control valid values (e.g., dates, non-negative pages).
+  \item \textbf{Entity integrity}: PK cannot be \texttt{NULL}.
+  \item \textbf{Referential integrity}: FK must reference an existing PK (or be \texttt{NULL} if allowed).
+  \item These rules keep data \textbf{consistent} across tables.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{How we ask questions (SQL mirrors simple ops)}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.55\linewidth}
+\textbf{Core ideas}
+\begin{itemize}
+  \item \textbf{Filter} rows (\emph{selection}): \texttt{WHERE}
+  \item \textbf{Pick} columns (\emph{projection}): \texttt{SELECT} list
+  \item \textbf{Match} tables (\emph{join}): \texttt{JOIN ... ON}
+  \item \textbf{Summarize} (\emph{group/aggregate}): \texttt{GROUP BY}, \texttt{COUNT}, \texttt{SUM}, \dots
+\end{itemize}
+\end{column}
+\begin{column}{0.45\linewidth}
+\textbf{Example questions}
+\begin{itemize}
+  \item “Which copies are currently on loan?”
+  \item “Which students own at least two books?”
+  \item “How many Chemistry students borrowed in 2024?”
+\end{itemize}
+\end{column}
+\end{columns}
+\vspace{0.6em}
+\textbf{Takeaway:} you describe \emph{what} you want; the database figures out \emph{how} to get it efficiently.
+\end{frame}
+
+% =============================================================================
 \section{Question}
+% =============================================================================
 
 \begin{frame}{Case Description}
 Students at the National University of Ngendipura (NUN) buy, lend, and borrow books.
@@ -143,6 +227,7 @@ INSERT INTO book VALUES (
 );
 \end{lstlisting}
 \end{frame}
+
 \begin{frame}[fragile]{Q2. Book Variants \& Keys}
 \textbf{(c)} Same book, different \texttt{ISBN10} (PK \texttt{isbn13} violated):
 \begin{lstlisting}[language=SQL]
@@ -285,6 +370,7 @@ ALTER TABLE copy
 DROP COLUMN available;
 \end{lstlisting}
 \end{frame}
+
 \begin{frame}[fragile]{Q4. Modifying the Schema — Drop Redundant Availability}
 \begin{lstlisting}[language=SQL]
 -- View that recomputes availability
@@ -339,7 +425,7 @@ ADD FOREIGN KEY (department) REFERENCES department(department);
 \begin{frame}
 \begin{center}
 Questions?\\
-Drop a mail at pratik.karmakar@u.nus.edu
+Drop a mail at: pratik.karmakar@u.nus.edu
 \end{center}
 \end{frame}
 
