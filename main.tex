@@ -1,0 +1,346 @@
+\documentclass{beamer}
+
+% --- Core fonts & language (no CJK) ---
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+
+% --- Math, algorithms, graphics, colors, tikz ---
+\usepackage{amsmath,amssymb}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{caption}
+\usepackage{tikz}
+\usetikzlibrary{overlay-beamer-styles}
+\usepackage{booktabs,multicol,stackengine}
+\usepackage[table,dvipsnames]{xcolor} % dvipsnames enables ForestGreen
+\usepackage{cancel}
+\usepackage{moresize}
+
+% --- Hyperref ---
+\usepackage{hyperref}
+
+% --- Listings (code) ---
+\usepackage{listings}
+\definecolor{nus-orange}{RGB}{239,124,0}
+\definecolor{nus-blue}{RGB}{0,61,124}
+\definecolor{halfgray}{gray}{0.55}
+
+\lstset{
+  basicstyle=\ttfamily\tiny, % use \scriptsize if you need more lines on a slide
+  keywordstyle=\bfseries\color{nus-blue},
+  stringstyle=\color{ForestGreen},
+  numbers=left,
+  numberstyle=\scriptsize\color{halfgray},
+  rulesepcolor=\color{nus-orange},
+  frame=shadowbox,
+  columns=flexible,
+  showstringspaces=false,
+  keepspaces=true,
+  tabsize=2,
+  breaklines=true
+}
+
+% --- English labels (to match BT5110_tutorial9) ---
+\renewcommand{\figurename}{Figure}
+\renewcommand{\algorithmname}{Algorithm}
+
+% --- Your style & macros (keep in same folder) ---
+\usepackage{SHU}
+\input{macros}
+
+% --- Title block (BT5110 look) ---
+\title{BT5110: Tutorial 1 — Relational Model}
+\author{\href{https://pratik2358.github.io/}{Pratik Karmakar}}
+\institute{School of Computing,\\ National University of Singapore}
+\date{AY25/26 S1}
+
+\begin{document}
+
+% ================= TITLE =================
+\begin{frame}
+  \titlepage
+  \IfFileExists{pic/nus-logo.png}{
+    \begin{figure}[htpb]\centering
+      \includegraphics[keepaspectratio, scale=0.18]{pic/nus-logo.png}
+    \end{figure}
+  }{}
+\end{frame}
+\section{Question}
+
+\begin{frame}{Case Description}
+Students at the National University of Ngendipura (NUN) buy, lend, and borrow books.
+Your company, Apasaja Private Limited, is commissioned by NUN Students Association (NUNStA) to implement an online book exchange system that records information about students, books they own, and the books they lend/borrow.
+
+The database stores:
+\begin{itemize}
+  \item \textbf{Students}: name, faculty, department, join date (year). Identifier: \texttt{email}.
+  \item \textbf{Books}: title, authors, publisher, year/edition, \texttt{ISBN-10}, \texttt{ISBN-13}.
+  \item \textbf{Loans}: per-copy borrow and return dates.
+\end{itemize}
+Auditing policy keeps book/copy/owner info while owners are students or copies have loan records;
+graduated students are kept if loans exist on books they owned.
+\end{frame}
+
+\begin{frame}{Q1. Data Definition Language (DDL)}
+\textbf{(a)} Download from \texttt{Canvas $\triangleright$ Files $\triangleright$ Cases $\triangleright$ Book Exchange}:\\
+\texttt{NUNStASchema.sql}, \texttt{NUNStAClean.sql}, \texttt{NUNStAStudent.sql}, \texttt{NUNStABook.sql}, \texttt{NUNStACopy.sql}, \texttt{NUNStALoan.sql}.
+\vspace{0.5em}
+
+\textbf{(b)} What they do:
+\begin{itemize}
+  \item \textbf{Clean Up}: \texttt{NUNStAClean.sql} drops tables using \texttt{IF EXISTS}.
+  \item \textbf{Schema}: \texttt{NUNStASchema.sql} creates tables with domains/constraints using \texttt{IF NOT EXISTS}.
+  \item \textbf{Data}: \texttt{NUNStAStudent.sql}, \texttt{NUNStABook.sql}, \texttt{NUNStACopy.sql}, \texttt{NUNStALoan.sql} populate tables (order matters).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Q1. Create \& Populate — Correct Order}
+\textbf{(c)} In \textbf{pgAdmin 4}, run:
+\begin{enumerate}
+  \item Create: \texttt{student}, \texttt{book}
+  \item Create: \texttt{copy}, \texttt{loan} (FKs depend on 1)
+  \item Populate: \texttt{student}, \texttt{book} (any order)
+  \item Populate: \texttt{copy} $\to$ \texttt{loan}
+\end{enumerate}
+Cleanup is reverse: \texttt{loan} $\to$ \texttt{copy} $\to$ \texttt{student}, \texttt{book}.
+\end{frame}
+
+\begin{frame}[fragile]{Q2. Insert / Delete / Update — Book Inserts}
+\textbf{(a)} Insert a new book:
+\begin{lstlisting}[language=SQL]
+INSERT INTO book VALUES (
+  'An Introduction to Database Systems',
+  'paperback',
+  640,
+  'English',
+  'C. J. Date',
+  'Pearson',
+  '2003-01-01',
+  '0321197844',
+  '978-0321197849'
+);
+-- Verify:
+SELECT * FROM book;
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Q2. Book Variants \& Keys}
+\textbf{(b)} Same book, different \texttt{ISBN13} (unique \texttt{isbn10} violated):
+\begin{lstlisting}[language=SQL]
+INSERT INTO book VALUES (
+  'An Introduction to Database Systems',
+  'paperback',
+  640,
+  'English',
+  'C. J. Date',
+  'Pearson',
+  '2003-01-01',
+  '0321197844',
+  '978-0201385908'
+);
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{Q2. Book Variants \& Keys}
+\textbf{(c)} Same book, different \texttt{ISBN10} (PK \texttt{isbn13} violated):
+\begin{lstlisting}[language=SQL]
+INSERT INTO book VALUES (
+  'An Introduction to Database Systems',
+  'paperback',
+  640,
+  'English',
+  'C. J. Date',
+  'Pearson',
+  '2003-01-01',
+  '0201385902',
+  '978-0321197849'
+);
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Q2. Insert Students}
+\textbf{(d)} Explicit values; \texttt{year} may be \texttt{NULL}:
+\begin{lstlisting}[language=SQL]
+INSERT INTO student VALUES (
+  'TIKKI TAVI',
+  'tikki@gmail.com',
+  '2024-08-15',
+  'School of Computing',
+  'CS',
+  NULL
+);
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Q2. Insert Students}
+\textbf{(e)} Column list (omitting PK forces \texttt{NULL} and fails):
+\begin{lstlisting}[language=SQL]
+INSERT INTO student (email, name, year, faculty, department) VALUES (
+  'rikki@gmail.com',
+  'RIKKI TAVI',
+  '2024-08-15',
+  'School of Computing',
+  'CS'
+);
+
+-- Fails: PK email omitted -> NULL not allowed
+INSERT INTO student (name, year, faculty, department) VALUES (
+  'RIKKI TAVI',
+  '2024-08-15',
+  'School of Computing',
+  'CS'
+);
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Q2. Update \& Delete}
+\textbf{(f)} Normalize department spelling:
+\begin{lstlisting}[language=SQL]
+UPDATE student
+SET department = 'Computer Science'
+WHERE department = 'CS';
+
+-- Checks
+SELECT * FROM student WHERE department = 'CS';               -- empty
+SELECT * FROM student WHERE department = 'Computer Science';  -- rows
+\end{lstlisting}
+
+\textbf{(g)} Case-sensitive delete (no-op):
+\begin{lstlisting}[language=SQL]
+DELETE FROM student WHERE department = 'chemistry';
+\end{lstlisting}
+
+\textbf{(h)} Delete protected by FKs (likely fails unless schema permits):
+\begin{lstlisting}[language=SQL]
+DELETE FROM student WHERE department = 'Chemistry';
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{Q3. DEFERRABLE Constraints (Semantics)}
+\textbf{(a)} In PostgreSQL, \texttt{UNIQUE}/\texttt{PRIMARY KEY}/\texttt{FOREIGN KEY} may be:
+\begin{itemize}
+  \item \texttt{NOT DEFERRABLE} (always \textit{IMMEDIATE}),
+  \item \texttt{DEFERRABLE INITIALLY IMMEDIATE},
+  \item \texttt{DEFERRABLE INITIALLY DEFERRED}.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Q3. Delete Book + Copy (Immediate vs Deferred)}
+Insert a copy owned by \texttt{tikki}:
+\begin{lstlisting}[language=SQL]
+INSERT INTO copy VALUES (
+  'tikki@gmail.com',
+  '978-0321197849',
+  1,
+  'TRUE'
+);
+\end{lstlisting}
+
+\textbf{Transaction \#1} (IMMEDIATE) — violates FK on first delete:
+\begin{lstlisting}[language=SQL]
+BEGIN TRANSACTION;
+
+SET CONSTRAINTS ALL IMMEDIATE;
+DELETE FROM book WHERE ISBN13 = '978-0321197849';
+DELETE FROM copy WHERE book = '978-0321197849';
+
+END TRANSACTION;
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Q3. Deferred Transaction (Succeeds)}
+\textbf{Transaction \#2} (DEFERRED) — combined effect OK at commit:
+\begin{lstlisting}[language=SQL]
+BEGIN TRANSACTION;
+
+SET CONSTRAINTS ALL DEFERRED;
+DELETE FROM book WHERE ISBN13 = '978-0321197849';
+DELETE FROM copy WHERE book = '978-0321197849';
+
+END TRANSACTION;
+\end{lstlisting}
+
+\textbf{Check intermediate state after deleting the book (line 3):}
+\begin{lstlisting}[language=SQL]
+-- Book is gone
+SELECT * FROM book b WHERE b.ISBN13 = '978-0321197849';
+
+-- Copy still present -> intermediate state inconsistent
+SELECT * FROM copy c WHERE c.book = '978-0321197849';
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Q4. Modifying the Schema — Drop Redundant Availability}
+\textbf{(a)} Availability is derivable: a copy is unavailable iff it has an open loan.
+\begin{lstlisting}[language=SQL]
+-- Unreturned loans
+SELECT owner, book, copy, returned
+FROM loan
+WHERE returned ISNULL;
+
+-- Remove redundant column
+ALTER TABLE copy
+DROP COLUMN available;
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{Q4. Modifying the Schema — Drop Redundant Availability}
+\begin{lstlisting}[language=SQL]
+-- View that recomputes availability
+CREATE OR REPLACE VIEW copy_view (owner, book, copy, available) AS (
+  SELECT DISTINCT c.owner, c.book, c.copy,
+    CASE
+      WHEN EXISTS (
+        SELECT * FROM loan l
+        WHERE l.owner = c.owner
+          AND l.book  = c.book
+          AND l.copy  = c.copy
+          AND l.returned ISNULL
+      ) THEN 'FALSE'
+      ELSE 'TRUE'
+    END
+  FROM copy c
+);
+
+-- Example update attempt (requires INSTEAD OF trigger/rule in practice)
+UPDATE copy_view
+SET owner = 'tikki@google.com'
+WHERE owner = 'tikki@gmail.com';
+
+-- Drop when done
+DROP VIEW copy_view;
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Q4. Normalize Department \texorpdfstring{$\to$}{->} Faculty Mapping}
+\textbf{(b)} \texttt{department} $\to$ \texttt{faculty} (FD) — store mapping once.
+\begin{lstlisting}[language=SQL]
+CREATE TABLE department (
+  department VARCHAR(32) PRIMARY KEY,
+  faculty    VARCHAR(62) NOT NULL
+);
+
+INSERT INTO department
+SELECT DISTINCT department, faculty
+FROM student;
+
+ALTER TABLE student
+DROP COLUMN faculty;
+
+ALTER TABLE student
+ADD FOREIGN KEY (department) REFERENCES department(department);
+\end{lstlisting}
+\end{frame}
+
+% =============================================================================
+\section*{End}
+% =============================================================================
+\begin{frame}
+\begin{center}
+Questions?\\
+Drop a mail at pratik.karmakar@u.nus.edu
+\end{center}
+\end{frame}
+
+\end{document}
