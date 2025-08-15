@@ -29,7 +29,7 @@
 \definecolor{halfgray}{gray}{0.55}
 
 \lstset{
-  basicstyle=\ttfamily\tiny, % use \scriptsize if you need more lines on a slide
+  basicstyle=\ttfamily\footnotesize, % use \scriptsize if you need more lines on a slide
   keywordstyle=\bfseries\color{nus-blue},
   stringstyle=\color{ForestGreen},
   numbers=left,
@@ -131,9 +131,9 @@
 \begin{column}{0.55\linewidth}
 \textbf{Core ideas}
 \begin{itemize}
-  \item \textbf{Filter} rows (\emph{selection}): \texttt{WHERE}
-  \item \textbf{Pick} columns (\emph{projection}): \texttt{SELECT} list
-  \item \textbf{Match} tables (\emph{join}): \texttt{JOIN ... ON}
+  \item \textbf{Filter} rows (\emph{selection, $\sigma$}): \texttt{WHERE}
+  \item \textbf{Pick} columns (\emph{projection, $\pi$}): \texttt{SELECT} list
+  \item \textbf{Match} tables (\emph{join, $\bowtie$}): \texttt{JOIN ... ON}
   \item \textbf{Summarize} (\emph{group/aggregate}): \texttt{GROUP BY}, \texttt{COUNT}, \texttt{SUM}, \dots
 \end{itemize}
 \end{column}
@@ -388,7 +388,10 @@ CREATE OR REPLACE VIEW copy_view (owner, book, copy, available) AS (
     END
   FROM copy c
 );
-
+\end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{Q4. Modifying the Schema — Drop Redundant Availability}
+\begin{lstlisting}[language=SQL]
 -- Example update attempt (requires INSTEAD OF trigger/rule in practice)
 UPDATE copy_view
 SET owner = 'tikki@google.com'
