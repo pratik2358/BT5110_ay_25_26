@@ -62,9 +62,9 @@
 % ================= TITLE =================
 \begin{frame}
   \titlepage
-  \IfFileExists{pic/nus-logo.png}{
+  \IfFileExists{nus-logo.png}{
     \begin{figure}[htpb]\centering
-      \includegraphics[keepaspectratio, scale=0.18]{pic/nus-logo.png}
+      \includegraphics[keepaspectratio, scale=0.18]{nus-logo.png}
     \end{figure}
   }{}
 \end{frame}
@@ -147,7 +147,79 @@
 \end{column}
 \end{columns}
 \vspace{0.6em}
-\textbf{Takeaway:} you describe \emph{what} you want; the database figures out \emph{how} to get it efficiently.
+\textbf{Takeaway:} you describe \emph{what} you want; the database figures out \emph{how} to get it efficiently (query optimization).
+\end{frame}
+
+% =============================================================================
+\section{Relational Algebra Basics}
+% =============================================================================
+
+\begin{frame}{Why Relational Algebra?}
+\begin{itemize}
+  \item \textbf{Foundation of SQL}: Relational algebra provides the formal, mathematical basis for relational databases.
+  \item Defines \textbf{operations on relations} that always produce relations.
+  \item Ensures queries are \textbf{precise}, \textbf{composable}, and \textbf{optimizable}.
+  \item SQL = (mostly) declarative syntax built on these algebraic ideas.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Core Operators}
+\begin{itemize}
+  \item \textbf{Selection ($\sigma$)}: Pick rows that satisfy a condition.  
+  \(\;\;\sigma_{\text{year}=2024}(\text{Student})\)
+  \item \textbf{Projection ($\pi$)}: Pick certain columns.  
+  \(\;\;\pi_{\text{name, email}}(\text{Student})\)
+  \item \textbf{Renaming ($\rho$)}: Rename relation/attributes.  
+  \(\;\;\rho_{S}(\text{Student})\)
+  \item \textbf{Union ($\cup$)}, \textbf{Difference ($-$)}, \textbf{Intersection ($\cap$)}: Set-like ops (schemas must match).
+  \item \textbf{Cartesian Product ($\times$)}: Pair all tuples across two relations.
+  \item \textbf{Join ($\bowtie$)}: Combine rows across relations on matching attributes.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Examples and SQL Mapping}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.55\linewidth}
+\small
+\textbf{Relational Algebra}
+\begin{itemize}
+  \item $\pi_{\text{name}}(\sigma_{\text{faculty}=\text{'SoC'}}(\text{Student}))$
+  \vspace{1.1cm}
+  \item $\text{Student} \bowtie_{\text{student.email}=\text{copy.owner}} \text{Copy}$
+  \vspace{1.1cm}
+  \item $\pi_{\text{isbn13}}(\text{Book}) - \pi_{\text{book}}(\text{Copy})$
+\end{itemize}
+\end{column}
+\begin{column}{0.45\linewidth}
+\textbf{SQL Equivalent}
+\begin{lstlisting}[language=SQL]
+SELECT name
+FROM student
+WHERE faculty = 'SoC';
+\end{lstlisting}
+\begin{lstlisting}[language=SQL]
+SELECT *
+FROM student s
+JOIN copy c
+  ON s.email = c.owner;
+\end{lstlisting}
+\begin{lstlisting}[language=SQL]
+SELECT isbn13
+FROM book
+EXCEPT
+SELECT book
+FROM copy;
+\end{lstlisting}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Takeaway}
+\begin{itemize}
+  \item Relational algebra = the \textbf{mathematical core} of querying.
+  \item SQL extends it with ordering, grouping, aggregation, etc.
+  \item Understanding algebra clarifies how SQL queries work “under the hood.”
+\end{itemize}
 \end{frame}
 
 % =============================================================================
