@@ -1,11 +1,7 @@
 \documentclass{beamer}
-
-% --- Core fonts & language (no CJK) ---
 \usepackage[T1]{fontenc}
 \usepackage[english]{babel}
 \usepackage{lmodern}
-
-% --- Math, algorithms, graphics, colors, tikz ---
 \usepackage{amsmath,amssymb}
 \usepackage{algorithm}
 \usepackage{algorithmic}
@@ -15,21 +11,19 @@
 \usepackage{tikz}
 \usetikzlibrary{overlay-beamer-styles}
 \usepackage{booktabs,multicol,stackengine}
-\usepackage[table,dvipsnames]{xcolor} % dvipsnames enables ForestGreen
+\usepackage[table,dvipsnames]{xcolor}
 \usepackage{cancel}
 \usepackage{moresize}
 
-% --- Hyperref ---
 \usepackage{hyperref}
 
-% --- Listings (code) ---
 \usepackage{listings}
 \definecolor{nus-orange}{RGB}{239,124,0}
 \definecolor{nus-blue}{RGB}{0,61,124}
 \definecolor{halfgray}{gray}{0.55}
 
 \lstset{
-  basicstyle=\ttfamily\footnotesize, % use \scriptsize if you need more lines on a slide
+  basicstyle=\ttfamily\footnotesize
   keywordstyle=\bfseries\color{nus-blue},
   stringstyle=\color{ForestGreen},
   numbers=left,
@@ -43,15 +37,12 @@
   breaklines=true
 }
 
-% --- English labels (to match BT5110_tutorial9) ---
 \renewcommand{\figurename}{Figure}
 \renewcommand{\algorithmname}{Algorithm}
 
-% --- Your style & macros (keep in same folder) ---
 \usepackage{SHU}
 \input{macros}
 
-% --- Title block (BT5110 look) ---
 \title{BT5110: Tutorial 2 — Entity - Relationship Model}
 \author{\href{https://pratik2358.github.io/}{Pratik Karmakar}}
 \institute{School of Computing,\\ National University of Singapore}
@@ -212,5 +203,12 @@
         \centering
         \includegraphics[width=1.1\linewidth]{tut_02_files/21.pdf}
     \end{figure}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+Questions?\\
+Drop a mail at: pratik.karmakar@u.nus.edu
+\end{center}
 \end{frame}
 \end{document}
