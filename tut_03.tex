@@ -59,6 +59,35 @@
 \end{frame}
 \include{tut_03_example}
 
+\section{Armstrong's Axioms}
+\begin{frame}{Rules for Functional Dependencies (Armstrong's Axioms)}
+\scriptsize
+$W, X, Y, Z$ mentioned here are \alert{sets} of attributes.\\
+\textbf{Sound \& complete inference system}
+\begin{itemize}\setlength\itemsep{0.25em}
+  \item \textbf{Reflexivity}:\; If $Y\subseteq X$, then $X \to Y$.
+  \item \textbf{Augmentation}:\; If $X \to Y$, then $XZ \to YZ$ for any $Z$.
+  \item \textbf{Transitivity}:\; If $X \to Y$ and $Y \to Z$, then $X \to Z$.
+\end{itemize}
+
+\medskip
+\textbf{Common derived rules} (from the three above)
+\begin{itemize}\setlength\itemsep{0.25em}
+  \item \textbf{Union / Additivity}:\; If $X \to Y$ and $X \to Z$, then $X \to Y\cup Z$.
+  \item \textbf{Decomposition / Projectivity}:\; If $X \to Y\cup Z$, then $X \to Y$ and $X \to Z$.
+  \item \textbf{Pseudotransitivity}:\; If $X \to Y$ and $W\cup Y \to Z$, then $W\cup X \to Z$.
+  \item \textbf{Composition}:\; If $X \to Y$ and $Z \to W$, then $X\cup Z \to Y\cup W$.
+  \item \textbf{Self-determination}:\; $X \to X$.
+\end{itemize}
+
+\medskip
+\textbf{How we use them here}
+\begin{itemize}\setlength\itemsep{0.25em}
+  \item \emph{LHS reduction}: test if $X\setminus\{A\}\to Y$ holds via closure using the axioms.
+  \item \emph{Redundancy removal}: test if an FD $X\to Y$ is implied by the rest (i.e., $Y\subseteq X^+$ computed from the others).
+\end{itemize}
+\end{frame}
+
 \section{Solutions}
 
 \begin{frame}[fragile]{Question 1.a.}
@@ -106,34 +135,6 @@ H & \texttt{address} \\
 \medskip
 \scriptsize
 \textcolor{teal}{Notes: A bean is identified by \alert{name} or by \alert{(cultivar, region)}; a drink name is unique \emph{per bean}; branches sell drinks, with address and quantity recorded.}
-\end{frame}
-
-\begin{frame}{Rules for Functional Dependencies (Armstrong's Axioms)}
-\scriptsize
-$W, X, Y, Z$ mentioned here are \alert{sets} of attributes.\\
-\textbf{Sound \& complete inference system}
-\begin{itemize}\setlength\itemsep{0.25em}
-  \item \textbf{Reflexivity}:\; If $Y\subseteq X$, then $X \to Y$.
-  \item \textbf{Augmentation}:\; If $X \to Y$, then $XZ \to YZ$ for any $Z$.
-  \item \textbf{Transitivity}:\; If $X \to Y$ and $Y \to Z$, then $X \to Z$.
-\end{itemize}
-
-\medskip
-\textbf{Common derived rules} (from the three above)
-\begin{itemize}\setlength\itemsep{0.25em}
-  \item \textbf{Union / Additivity}:\; If $X \to Y$ and $X \to Z$, then $X \to Y\cup Z$.
-  \item \textbf{Decomposition / Projectivity}:\; If $X \to Y\cup Z$, then $X \to Y$ and $X \to Z$.
-  \item \textbf{Pseudotransitivity}:\; If $X \to Y$ and $W\cup Y \to Z$, then $W\cup X \to Z$.
-  \item \textbf{Composition}:\; If $X \to Y$ and $Z \to W$, then $X\cup Z \to Y\cup W$.
-  \item \textbf{Self-determination}:\; $X \to X$.
-\end{itemize}
-
-\medskip
-\textbf{How we use them here}
-\begin{itemize}\setlength\itemsep{0.25em}
-  \item \emph{LHS reduction}: test if $X\setminus\{A\}\to Y$ holds via closure using the axioms.
-  \item \emph{Redundancy removal}: test if an FD $X\to Y$ is implied by the rest (i.e., $Y\subseteq X^+$ computed from the others).
-\end{itemize}
 \end{frame}
 
 \begin{frame}{Question 1.b. \; Candidate keys via closures}
