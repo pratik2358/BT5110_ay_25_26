@@ -1,0 +1,329 @@
+\documentclass[UTF8]{beamer}
+\usepackage{hyperref}
+\usepackage{outlines}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath,amssymb}
+\usepackage[T1]{fontenc}
+\usepackage{moresize}
+\usepackage[english]{babel}
+\usepackage{tikz}
+\usetikzlibrary{overlay-beamer-styles}
+
+\usepackage{latexsym,xcolor,multicol,booktabs,calligra}
+\usepackage{pstricks,listings,stackengine}
+\usepackage[table]{xcolor}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{cancel}
+
+% Ensure English labels
+\renewcommand{\figurename}{Figure}
+\renewcommand{\algorithmname}{Algorithm}
+
+% Theme (same as your previous)
+\usepackage{SHU}
+
+% --- Small helper defs ---
+\def\cmd#1{\texttt{\color{red}\footnotesize $\backslash$#1}}
+\def\env#1{\texttt{\color{blue}\footnotesize #1}}
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+\definecolor{halfgray}{gray}{0.55}
+\definecolor{nus-orange}{RGB}{239,124,0}
+\definecolor{nus-white}{RGB}{255,255,255}
+\definecolor{nus-blue}{RGB}{0,61,124}
+\definecolor{nus-black}{RGB}{0,0,0}
+
+\newcommand\vscore{\mathsf{VScore}}
+\newcommand\Fontvi{\fontsize{6}{7.2}\selectfont}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\q}{$q_\mathrm{ex}$}
+\renewcommand{\leq}{\leqslant}
+\renewcommand{\geq}{\geqslant}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\bfseries\color{nus-blue},
+  emphstyle=\ttfamily\color{nus-blue},
+  stringstyle=\color{deepgreen},
+  numbers=left,
+  numberstyle=\small\color{halfgray},
+  rulesepcolor=\color{nus-orange},
+  frame=shadowbox,
+}
+
+\author{\href{https://pratik2358.github.io/}{Pratik Karmakar}}
+\title{BT5110: Tutorial 4 — Normal Forms}
+\institute{
+  School of Computing,\\
+  National University of Singapore
+}
+\date{AY25/26 S1}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+  \begin{figure}[htpb]
+    \begin{center}
+      \includegraphics[keepaspectratio, scale=0.18]{nus-logo.png}
+    \end{center}
+  \end{figure}
+\end{frame}
+
+\section{Question}
+\begin{frame}{Question}
+\footnotesize
+Your company, Apasaja Private Limited, is commissioned by \emph{Toko Kopi Luwak} to design the relational schema for the management of their coffee beans, drinks, and cafes.\medskip
+
+A coffee bean is fully identified by its unique brand name \emph{or} by the pair (cultivar, region). A drink can be made using a particular coffee bean; the drink name is only unique \emph{per} bean (e.g., ``Espresso'' with bean ``The Waterfall'' or with bean ``La Bella''). We also record the drink price.\medskip
+
+A branch (identified by branch name) may sell zero or more drinks; a drink may be sold by zero or more branches. Each branch records an address, and for each (branch, drink) pair we record the quantity sold.
+\medskip
+
+We are given only an abstract schema:
+\[
+R=\{A,B,C,D,E,F,G,H\}
+\]
+\[
+\Sigma=\{\{A\} \to \{C,E\}, \{A,B\} \to \{D\}, \{F\} \to \{H\}, \{C,E\} \to \{A\},\\
+\{B,C,E\} \to \{D\}, \{A,B,F\} \to \{D,G\}, \{B,C,E,F\} \to \{G\}\}.
+\]
+\end{frame}
+
+\begin{frame}{Question}
+\footnotesize
+\textbf{1.\ Normal Form}
+\begin{itemize}
+  \item[(a)] Is $R$ with $\Sigma$ in 3NF?
+  \item[(b)] Is $R$ with $\Sigma$ in BCNF?
+\end{itemize}
+\textbf{2.\ Normalisation}
+\begin{itemize}
+  \item[(a)] Decompose (synthesise) $R$ with $\Sigma$ into a 3NF decomposition using the lecture algorithm.
+  \item[(b)] Is the result lossless?
+  \item[(c)] Is the result dependency preserving?
+  \item[(d)] Is the result in BCNF?
+  \item[(e)] Decompose $R$ with $\Sigma$ into a BCNF decomposition using the lecture algorithm.
+  \item[(f)] Is the result lossless?
+  \item[(g)] Is the result dependency preserving?
+\end{itemize}
+\end{frame}
+
+\section{Solutions}
+
+\begin{frame}{1(a).\ Is $R$ with $\Sigma$ in 3NF?}
+\footnotesize
+\begin{block}{Criteria for 3NF}
+    If $X\to \{A\} \in \Sigma$:
+    \begin{itemize}
+        \item $X\to \{A\}$ is trivial \alert{or}
+        \item $X$ is a superkey \alert{or}
+        \item $A$ is a prime attribute
+    \end{itemize}
+\end{block}
+Known keys (from previous tutorial): $\{A,B,F\}$ and $\{B,C,E,F\}$.
+Prime attributes: $A,B,C,E,F$.\medskip
+
+Consider $\{A,B\}\to\{D\}$:
+\begin{itemize}\itemsep2pt
+  \item Nontrivial.
+  \item $\{A,B\}$ is \emph{not} a superkey.
+  \item $D$ is not prime.
+\end{itemize}
+\[
+\Rightarrow\ \ R\text{ with }\Sigma\ \textbf{is not in 3NF.}
+\]
+\end{frame}
+
+\begin{frame}{1(b).\ Is $R$ with $\Sigma$ in BCNF?}
+\footnotesize
+\begin{columns}
+    \begin{column}{0.5\textwidth}
+        \begin{block}{Criteria for 3NF}
+    If $X\to \{A\} \in \Sigma$:
+    \begin{itemize}
+        \item $X\to \{A\}$ is trivial \alert{or}
+        \item $X$ is a superkey \alert{or}
+        \item $A$ is a prime attribute
+    \end{itemize}
+\end{block}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+        \begin{block}{Criteria for BCNF}
+    If $X\to \{A\} \in \Sigma$:
+    \begin{itemize}
+        \item $X\to \{A\}$ is trivial \alert{or}
+        \item $X$ is a superkey
+    \end{itemize}
+\end{block}
+    \end{column}
+\end{columns}
+\vspace{0.5cm}
+Since not 3NF, cannot be BCNF.\\
+A direct violation: $\{A\}\to\{C\}$ is nontrivial and
+\[
+A^+=\{A,C,E\}\subset R\quad\Rightarrow\quad \{A\}\ \text{is not a superkey}.
+\]
+So $R$ with $\Sigma$ \textbf{is not in BCNF}.
+\end{frame}
+
+\begin{frame}{2(a).\ 3NF synthesis (decomposition)}
+\footnotesize
+Start from a canonical (minimal) cover:
+\[
+\{\ \{A\} \to \{C,E\},\ \{F\} \to \{H\},\ \{C,E\} \to \{A\},\ \{B,C,E\} \to \{D\},\ \{B,C,E,F\} \to \{G\}\ \}.
+\]
+Synthesize one fragment per FD:
+\[
+\{\ \{A,C,E\},\ \{F,H\},\ \{A,C,E\},\ \{B,C,D,E\},\ \{B,C,E,F,G\}\ \}.
+\]
+Remove subsumed duplicates:
+\[
+\{\ \{A,C,E\},\ \{F,H\},\ \{B,C,D,E\},\ \{B,C,E,F,G\}\ \}.
+\]
+A key fragment is not needed (the key $\{B,C,E,F\}\subseteq \{B,C,E,F,G\}$ is covered).
+\end{frame}
+
+\begin{frame}{2(b)--2(c).\ Lossless and dependency preserving?}
+\small
+\textbf{Lossless:} Yes, guaranteed by the 3NF synthesis algorithm.\medskip
+
+\textbf{Dependency preserving:} Yes, guaranteed by the algorithm (each FD is placed in some fragment, and cover equivalence is preserved).
+\end{frame}
+
+\begin{frame}{2(d).\ Is the 3NF result also in BCNF?}
+\footnotesize
+Fragments and projected dependencies:
+\begin{itemize}\itemsep2pt
+  \item $R_1=\{A,C,E\}$ with $\Sigma_1=\{\{A\}\to\{C\},\ \{A\}\to\{E\},\ \{C,E\}\to\{A\}\}$.
+  \item $R_2=\{F,H\}$ with $\Sigma_2=\{\{F\}\to\{H\}\}$.
+  \item $R_3=\{B,C,D,E\}$ with $\Sigma_3=\{\{B,C,E\}\to\{D\}\}$.
+  \item $R_4=\{B,C,E,F,G\}$ with $\Sigma_4=\{\{B,C,E,F\}\to\{G\}\}$.
+\end{itemize}
+Each fragment satisfies BCNF (check: every nontrivial FD has a superkey LHS in its fragment). Hence, \textbf{this} 3NF decomposition is also in BCNF. (Not guaranteed in general.)
+\end{frame}
+
+\begin{frame}{2(e).\ BCNF decomposition via violations}
+\footnotesize
+A BCNF violation is $\{A\}\to\{C\}$.\medskip
+
+Decompose:
+\[
+R_1=\{A\}^+=\{A,B,C,D\}\quad\text{with}\quad \Sigma_1=\{\{A\}\to\{C\},\{A\}\to\{B\},\{B\}\to\{A\},\{C\}\to\{D\}\}.
+\]
+\[
+R_2=\{A,E\}\quad\text{with}\quad \Sigma_2=\emptyset.
+\]
+$R_2$ is BCNF. $R_1$ is not (since $\{C\}\to\{D\}$).\medskip
+
+Further decompose $R_1$:
+\[
+R_{1.1}=\{C\}^+=\{C,D\}\quad(\text{BCNF}),\qquad
+R_{1.2}=\{A,B,C\}\ \text{with}\ \Sigma_{1.2}=\{\{A\}\to\{B\},\{A\}\to\{C\},\{B\}\to\{A\}\}\ (\text{BCNF}).
+\]
+\textbf{Final BCNF decomposition:} $R_2,\ R_{1.1},\ R_{1.2}$.
+\end{frame}
+
+\begin{frame}{2(f)--2(g).\ Lossless? Dependency preserving?}
+\small
+\textbf{Lossless:} Yes (each BCNF step applies a lossless split on a violating FD).\medskip
+
+\textbf{Dependency preserving:} Not guaranteed in general for BCNF. \\
+For this instance, check by projection: the core FDs
+\[
+\{A\} \to \{C,E\},\ \{F\} \to \{H\},\ \{C,E\} \to \{A\},\ \{B,C,E\} \to \{D\},\ \{B,C,E,F\} \to \{G\}
+\]
+are covered by the fragments above, so the result is \textbf{dependency preserving} here.
+\end{frame}
+
+% =========================
+% Supplementary
+% =========================
+\section{Supplementary}
+
+\begin{frame}{Dependency Projection Algorithm}
+\begin{algorithm}[H]
+\small
+\caption{Dependency Projection Algorithm\footnote{\href{https://github.com/pratik2358/fucntional_dep/blob/main/functional_deps.ipynb}
+{\textcolor{blue}{Link to code$\to$ Cell 1:} \textcolor{red}{project\_dependency}}}}
+\label{algorithm:algo}
+\begin{algorithmic}[1]
+\REQUIRE $\Sigma$: Set of functional dependencies
+\REQUIRE $R'$: Set of attributes to project on
+\ENSURE $\Sigma'$: Projected set of functional dependencies
+
+\STATE Initialize $\Sigma' \gets \emptyset$
+\FOR{$\text{each }(lhs\to rhs) \text{ in } \Sigma$}
+    \IF{$lhs \text{ is a subset of } R'$}
+        \STATE $y \gets rhs \cap R'$
+        \IF{$y \text{ is not empty}$}
+            \STATE $\Sigma' \gets \Sigma' \cup \{\{\text{lhs} \to y\}\}$
+        \ENDIF
+    \ENDIF
+\ENDFOR
+\RETURN $\Sigma'$
+\end{algorithmic}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]{Dependency Projection Example}
+\scriptsize
+\begin{columns}
+    \begin{column}{0.3\textwidth}
+        $R = \{A,B,C,D,E\}$\\
+\vspace{0.2cm}
+$\Sigma =\\ \{ \{ A \} \to \{ A, B, C \},\\ \{ A, B \} \to \{ A \},\\ \{ B, C \} \to \{ A, D \},\\ \{ B \} \to \{ A, B \},\\ \{ C \} \to \{ D \} \}$\\
+\vspace{0.2cm}
+$R' = \{A,B,C\}$
+    \end{column}
+    \begin{column}{0.7\textwidth}
+    \pause
+    \tiny
+    $\Sigma' = \emptyset$\\
+    \vspace{0.1cm}
+    \pause
+        \textcolor{blue}{$\{A\}\to \{A,B,C\}$}\\
+        $lhs = \{A\} \text{ is a subset of } R'$\\
+        $rhs = \{A,B,C\}\\
+        y = rhs \cap R' = \{A,B,C\}\cap\{A,B,C\} = \{A,B,C\} \neq \emptyset$\\
+        $\Sigma' = \{\{A\}\to \{A,B,C\}\}$\\
+        \vspace{0.1cm}
+    \pause
+    \textcolor{blue}{$\{A,B\} \to \{A\}$}\\
+    $lhs = \{A,B\} \text{ is a subset of } R'$\\
+    $rhs = \{A\}\\
+    y = rhs \cap R' = \{A\}\cap\{A,B,C\} = \{A\} \neq \emptyset$\\
+    $\Sigma' = \{\{A\}\to \{A,B,C\}, \{A,B\} \to \{A\}\}$\\
+    \vspace{0.1cm}
+    \pause
+    \textcolor{blue}{$\{B,C\} \to \{A,D\}$}\\
+    $lhs = \{B,C\} \text{ is a subset of } R'$\\
+    $rhs = \{A,D\}\\
+    y = rhs \cap R' = \{A,D\}\cap\{A,B,C\} = \{A\} \neq \emptyset$\\
+    $\Sigma' = \{\{A\}\to \{A,B,C\}, \{A,B\} \to \{A\}, \{B,C\} \to \{A\}\}$\\
+    \vspace{0.1cm}
+    \pause
+    \textcolor{blue}{$\{B\} \to \{A,B\}$}\\
+    $lhs = \{B\} \text{ is a subset of } R'$\\
+    $rhs = \{A,B\}\\
+    y = rhs \cap R' = \{A,B\}\cap\{A,B,C\} = \{A,B\} \neq \emptyset$\\
+    $\Sigma' = \{\{A\}\to \{A,B,C\}, \{A,B\} \to \{A\}, \{B,C\} \to \{A\}, \{B\} \to \{A,B\}\}$\\
+    \vspace{0.1cm}
+    \pause
+    \textcolor{blue}{$\{C\} \to \{D\}$}\\
+    $lhs = \{C\} \text{ is a subset of } R'$\\
+    $rhs = \{D\}\\
+    y = rhs \cap R' = \{D\}\cap\{A,B,C\} = \emptyset$\\
+    \vspace{0.1cm}
+    \pause
+    \textcolor{red}{$\Sigma' = \{\{A\}\to \{A,B,C\}, \{A,B\} \to \{A\}, \{B,C\} \to \{A\}, \{B\} \to \{A,B\}\}$}
+    \end{column}
+\end{columns}
+\end{frame}
+\end{document}
