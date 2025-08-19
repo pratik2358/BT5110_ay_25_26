@@ -1,179 +1,134 @@
-<!--
-README — How this works (keep this comment at the top of index.html)
-1) Put your PDFs in the same repo under the folder /slides (you can rename it; see CONFIG below).
-2) Add this file (index.html) and viewer.html under /docs so GitHub Pages can serve them.
-   Repo layout example:
-     /slides/lecture1.pdf
-     /slides/lecture2.pdf
-     /docs/index.html
-     /docs/viewer.html
-3) In GitHub → Settings → Pages → Build and deployment: "Deploy from a branch",
-   Branch: main (or your default), Folder: /docs. Save.
-4) Visit: https://<your-username>.github.io/<repo>  (or your custom domain) to see the gallery.
-5) This page lists PDFs from your repo via the GitHub API and opens them in a minimal PDF.js-based
-   slide viewer (viewer.html) with keyboard controls (←/→, space, f for fullscreen).
-6) If your repo is private, the public site cannot list files via the API. Options:
-   - Make the repo public (simplest), or
-   - Manually list PDFs in MANUAL_PDFS below, or
-   - Generate a manifest (pdfs.json) via a GitHub Action and load that instead.
-
-NOTE: No build step needed. Everything runs client-side on GitHub Pages.
--->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PDF Slides</title>
+  <title>BT5110 Tutorial Slides</title>
   <style>
-    :root {
-      --maxw: 1100px;
-      --gap: 16px;
-      --radius: 14px;
-    }
-    * { box-sizing: border-box; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; background:#0b1020; color:#e9ecf1; }
-    header { max-width: var(--maxw); margin: 24px auto; padding: 0 16px; }
-    h1 { font-size: clamp(22px, 4vw, 28px); margin: 0 0 4px; }
-    .muted { color:#9fb0c7; font-size: 14px; }
-
-    .grid { max-width: var(--maxw); margin: 16px auto 40px; padding: 0 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: var(--gap); }
-    .card { background: #121a33; border:1px solid #1f2b54; border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
-    .thumb { background: #0a0f22; display: grid; place-items: center; aspect-ratio: 16 / 10; }
-    .thumb canvas { max-width: 100%; height: auto; display:block; }
-    .caption { padding: 10px 12px; font-size: 14px; line-height: 1.35; border-top:1px solid #1f2b54; color:#dbe6f6; }
-    a.card { text-decoration: none; }
-
-    .error { max-width: var(--maxw); margin: 24px auto; padding: 12px 16px; color:#ffd2d2; background:#3a1212; border:1px solid #6a1a1a; border-radius: var(--radius); }
-    footer { max-width: var(--maxw); margin: 0 auto 40px; padding: 0 16px; color:#9fb0c7; font-size: 12px; }
-    code { background:#0f1730; padding:2px 6px; border-radius:6px; border:1px solid #213163; }
+    :root { --bg:#0b1020; --panel:#121a33; --line:#1f2b54; --txt:#e9ecf1; --muted:#9fb0c7; }
+    *{box-sizing:border-box}
+    body{ margin:0; background:var(--bg); color:var(--txt);
+          font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    .bar{ display:flex; align-items:center; gap:8px; padding:10px 12px;
+          background:var(--panel); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:10 }
+    .bar button, .bar a{ background:#0f1730; color:var(--txt); border:1px solid var(--line);
+          border-radius:10px; padding:8px 10px; font-size:14px; text-decoration:none }
+    .bar button:hover, .bar a:hover{ filter:brightness(1.1) }
+    .sp{ flex:1 }
+    #pageInfo{ font-size:14px; color:var(--muted) }
+    #viewer{ display:grid; place-items:center; width:100%; height:calc(100dvh - 56px);
+             overflow:auto; background:#0a0f22 }
+    canvas{ background:#0b1020; box-shadow:0 10px 30px rgba(0,0,0,.35);
+            border-radius:14px; display:block; max-width:96vw }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Tutorial Slides</h1>
-    <div class="muted">Click a card to open the slide viewer. Keyboard: ←/→ or space for nav, <code>f</code> for fullscreen.</div>
-  </header>
-
-  <div id="grid" class="grid" aria-live="polite"></div>
-  <div id="err" class="error" style="display:none"></div>
-
-  <footer>
-    <p>Configured to read from this repo via the GitHub API. If you prefer, hardcode a list of files in <code>MANUAL_PDFS</code>.</p>
-  </footer>
+  <div class="bar">
+    <button id="prev" title="Previous (←)">◀</button>
+    <button id="next" title="Next (→ or Space)">▶</button>
+    <span id="pageInfo">– / –</span>
+    <span class="sp"></span>
+    <button id="zoomOut" title="Zoom out (–)">−</button>
+    <button id="fit" title="Fit to width (0)">Fit</button>
+    <button id="zoomIn" title="Zoom in (+)">+</button>
+    <button id="fs" title="Toggle Fullscreen (f)">⛶</button>
+    <a id="download" download>Download</a>
+  </div>
+  <div id="viewer"><canvas id="canvas"></canvas></div>
 
   <script type="module">
-    // ======== CONFIG — change these to match your repo ========
-    const OWNER = "pratik2358";           // your GitHub username (already known)
-    const REPO  = "REPO_NAME";            // <-- set to your repository name
-    const BRANCH = "main";                // default branch
-    const PDF_PATH = "slides";            // folder containing PDFs
-    // Optional manual list (used if API listing fails or repo is private)
-    const MANUAL_PDFS = [
-  { name: "tut_01.pdf", title: "Tutorial 01", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_01.pdf` },
-  { name: "tut_02.pdf", title: "Tutorial 02", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_02.pdf` },
-  { name: "tut_03.pdf", title: "Tutorial 03", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_03.pdf` },
-  { name: "tut_04.pdf", title: "Tutorial 04", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_04.pdf` },
-  { name: "tut_05.pdf", title: "Tutorial 05", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_05.pdf` },
-  { name: "tut_06.pdf", title: "Tutorial 06", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_06.pdf` },
-];
-
-    // ======== Helper: build API + raw URLs ========
-    const apiURL  = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PDF_PATH}?ref=${BRANCH}`;
-    const rawURL  = (name) => `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/${encodeURIComponent(name)}`;
-    const viewURL = (pdfUrl) => `viewer.html?file=${encodeURIComponent(pdfUrl)}`;
-
-    const grid = document.getElementById("grid");
-    const err  = document.getElementById("err");
-
-    // Load pdf.js (for thumbnails) — using ESM build from jsDelivr
     import { GlobalWorkerOptions, getDocument } from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.mjs";
     GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.mjs";
 
-    async function fetchPDFsViaAPI() {
-      const res = await fetch(apiURL);
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const data = await res.json();
-      return data
-        .filter(item => item.type === 'file' && /\.pdf$/i.test(item.name))
-        .map(item => ({ name: item.name, url: item.download_url || rawURL(item.name) }));
+    const qs = new URLSearchParams(location.search);
+    const fileURL = qs.get('file');
+    if (!fileURL) {
+      alert('Missing ?file=… parameter');
+      throw new Error('No file param');
     }
 
-    async function renderThumb(canvas, url) {
-      try {
-        const loadingTask = getDocument({ url, disableStream: true, disableAutoFetch: true });
-        const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(1);
-        const baseViewport = page.getViewport({ scale: 1 });
-        const targetWidth = 320; // px
-        const scale = Math.min(1.5, targetWidth / baseViewport.width);
-        const viewport = page.getViewport({ scale });
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const pageInfo = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+    const zoomInBtn = document.getElementById('zoomIn');
+    const zoomOutBtn = document.getElementById('zoomOut');
+    const fitBtn = document.getElementById('fit');
+    const fsBtn = document.getElementById('fs');
+    const downloadA = document.getElementById('download');
 
-        const ratio = window.devicePixelRatio || 1;
-        canvas.width = Math.floor(viewport.width * ratio);
-        canvas.height = Math.floor(viewport.height * ratio);
-        canvas.style.width = Math.floor(viewport.width) + 'px';
-        canvas.style.height = Math.floor(viewport.height) + 'px';
+    downloadA.href = fileURL;
 
-        const ctx = canvas.getContext('2d');
-        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-        await page.render({ canvasContext: ctx, viewport }).promise;
-      } catch (e) {
-        // If thumbnail fails (e.g., CORS or large PDF), just ignore silently.
-      }
+    let pdf, page = 1, scale = 1.0, baseWidth = null, rendering = false;
+
+    function updatePageInfo() {
+      pageInfo.textContent = `${page} / ${pdf ? pdf.numPages : '–'}`;
     }
 
-    function card({ name, url, title }) {
-  const a = document.createElement('a');
-  a.className = 'card';
-  a.href = viewURL(url);
-  a.setAttribute('aria-label', title || name);
-
-  const thumb = document.createElement('div');
-  thumb.className = 'thumb';
-  const canvas = document.createElement('canvas');
-  thumb.appendChild(canvas);
-
-  const caption = document.createElement('div');
-  caption.className = 'caption';
-  caption.textContent = title || name;
-
-  a.appendChild(thumb); a.appendChild(caption);
-  grid.appendChild(a);
-  renderThumb(canvas, url);
-}
-
-    async function main() {
-  let files = [];
-  if (MANUAL_PDFS.length > 0) {
-    files = MANUAL_PDFS;
-  } else {
-    try {
-      files = await fetchPDFsViaAPI();
-      if (files.length === 0) throw new Error("No PDFs found in the folder.");
-    } catch (e) {
-      err.style.display = '';
-      err.textContent = `Could not list PDFs via API: ${e.message}. If this is a private repo, either make it public, or fill MANUAL_PDFS in index.html.`;
-      return;
-    }
-  }
-  // ensure expected order tut_01..tut_06
-  files.sort((a,b)=> (a.name||'').localeCompare(b.name||''));
-  files.forEach(card);
-} catch (e) {
-        if (MANUAL_PDFS.length > 0) {
-          files = MANUAL_PDFS;
-        } else {
-          err.style.display = '';
-          err.textContent = `Could not list PDFs via API: ${e.message}. If this is a private repo, either make it public, or fill MANUAL_PDFS in index.html.`;
-          return;
-        }
-      }
-      files.forEach(card);
+    function getFitScale(vpWidth) {
+      const pad = 24; // padding
+      const w = Math.min(document.documentElement.clientWidth, window.innerWidth) - pad;
+      return Math.max(0.2, Math.min(3, w / vpWidth));
     }
 
-    main();
+    async function render() {
+      if (!pdf || rendering) return;
+      rendering = true;
+      const p = await pdf.getPage(page);
+      const vp1 = p.getViewport({ scale: 1 });
+      if (baseWidth == null) baseWidth = vp1.width;
+
+      const ratio = window.devicePixelRatio || 1;
+      const vp = p.getViewport({ scale });
+      canvas.width = Math.floor(vp.width * ratio);
+      canvas.height = Math.floor(vp.height * ratio);
+      canvas.style.width = Math.floor(vp.width) + 'px';
+      canvas.style.height = Math.floor(vp.height) + 'px';
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      await p.render({ canvasContext: ctx, viewport: vp }).promise;
+      updatePageInfo();
+      rendering = false;
+    }
+
+    async function init() {
+      const task = getDocument({ url: fileURL });
+      pdf = await task.promise;
+      const first = await pdf.getPage(1);
+      const vp1 = first.getViewport({ scale: 1 });
+      baseWidth = vp1.width;
+      scale = getFitScale(baseWidth);
+      page = 1;
+      await render();
+    }
+
+    function next() { if (page < pdf.numPages) { page++; render(); } }
+    function prev() { if (page > 1) { page--; render(); } }
+    function zoomIn() { scale = Math.min(3, scale * 1.15); render(); }
+    function zoomOut() { scale = Math.max(0.2, scale / 1.15); render(); }
+    function fit() { if (baseWidth) { scale = getFitScale(baseWidth); render(); } }
+    function fsToggle() {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+
+    nextBtn.addEventListener('click', next);
+    prevBtn.addEventListener('click', prev);
+    zoomInBtn.addEventListener('click', zoomIn);
+    zoomOutBtn.addEventListener('click', zoomOut);
+    fitBtn.addEventListener('click', fit);
+    fsBtn.addEventListener('click', fsToggle);
+    window.addEventListener('resize', fit);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.code === 'Space') { e.preventDefault(); next(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+      else if (e.key === '+') { zoomIn(); }
+      else if (e.key === '-') { zoomOut(); }
+      else if (e.key === '0') { fit(); }
+      else if (e.key.toLowerCase() === 'f') { fsToggle(); }
+    });
+
+    init();
   </script>
 </body>
 </html>
