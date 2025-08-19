@@ -71,12 +71,9 @@ NOTE: No build step needed. Everything runs client-side on GitHub Pages.
     const PDF_PATH = "slides";            // folder containing PDFs
     // Optional manual list (used if API listing fails or repo is private)
     const MANUAL_PDFS = [
-  { name: "tut_01.pdf", title: "Tutorial 01", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_01.pdf` },
-  { name: "tut_02.pdf", title: "Tutorial 02", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_02.pdf` },
-  { name: "tut_03.pdf", title: "Tutorial 03", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_03.pdf` },
-  { name: "tut_04.pdf", title: "Tutorial 04", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_04.pdf` },
-  { name: "tut_06.pdf", title: "Tutorial 06", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_06.pdf` },
-];
+      // Example:
+      // { name: "lecture1.pdf", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/lecture1.pdf` },
+    ];
 
     // ======== Helper: build API + raw URLs ========
     const apiURL  = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PDF_PATH}?ref=${BRANCH}`;
@@ -123,44 +120,32 @@ NOTE: No build step needed. Everything runs client-side on GitHub Pages.
       }
     }
 
-    function card({ name, url, title }) {
-  const a = document.createElement('a');
-  a.className = 'card';
-  a.href = viewURL(url);
-  a.setAttribute('aria-label', title || name);
+    function card({ name, url }) {
+      const a = document.createElement('a');
+      a.className = 'card';
+      a.href = viewURL(url);
+      a.setAttribute('aria-label', name);
 
-  const thumb = document.createElement('div');
-  thumb.className = 'thumb';
-  const canvas = document.createElement('canvas');
-  thumb.appendChild(canvas);
+      const thumb = document.createElement('div');
+      thumb.className = 'thumb';
+      const canvas = document.createElement('canvas');
+      thumb.appendChild(canvas);
 
-  const caption = document.createElement('div');
-  caption.className = 'caption';
-  caption.textContent = title || name;
+      const caption = document.createElement('div');
+      caption.className = 'caption';
+      caption.textContent = name;
 
-  a.appendChild(thumb); a.appendChild(caption);
-  grid.appendChild(a);
-  renderThumb(canvas, url);
-}
+      a.appendChild(thumb); a.appendChild(caption);
+      grid.appendChild(a);
+      renderThumb(canvas, url);
+    }
 
     async function main() {
-  let files = [];
-  if (MANUAL_PDFS.length > 0) {
-    files = MANUAL_PDFS;
-  } else {
-    try {
-      files = await fetchPDFsViaAPI();
-      if (files.length === 0) throw new Error("No PDFs found in the folder.");
-    } catch (e) {
-      err.style.display = '';
-      err.textContent = `Could not list PDFs via API: ${e.message}. If this is a private repo, either make it public, or fill MANUAL_PDFS in index.html.`;
-      return;
-    }
-  }
-  // ensure expected order tut_01..tut_06
-  files.sort((a,b)=> (a.name||'').localeCompare(b.name||''));
-  files.forEach(card);
-} catch (e) {
+      let files = [];
+      try {
+        files = await fetchPDFsViaAPI();
+        if (files.length === 0 && MANUAL_PDFS.length === 0) throw new Error("No PDFs found in the folder.");
+      } catch (e) {
         if (MANUAL_PDFS.length > 0) {
           files = MANUAL_PDFS;
         } else {
