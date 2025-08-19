@@ -3,7 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PDF Slide Viewer</title>
+  <title>BT5110 Tutorial Slides — Viewer</title>
+
+  <!-- PDF.js viewer CSS (provides annotation layer styling) -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/web/pdf_viewer.css">
+
   <style>
     :root { --bg:#0b1020; --panel:#121a33; --line:#1f2b54; --txt:#e9ecf1; --muted:#9fb0c7; }
     *{box-sizing:border-box}
@@ -16,8 +21,12 @@
     .bar button:hover, .bar a:hover{ filter:brightness(1.1) }
     .sp{ flex:1 }
     #pageInfo{ font-size:14px; color:var(--muted) }
+
     #viewer{ display:grid; place-items:center; width:100%; height:calc(100dvh - 56px);
              overflow:auto; background:#0a0f22 }
+    /* Page container must be relative so the annotation layer can overlay the canvas */
+    .page { position: relative; }
+    .annotationLayer { position:absolute; inset:0; }
     canvas{ background:#0b1020; box-shadow:0 10px 30px rgba(0,0,0,.35);
             border-radius:14px; display:block; max-width:96vw }
   </style>
@@ -34,20 +43,29 @@
     <button id="fs" title="Toggle Fullscreen (f)">⛶</button>
     <a id="download" download>Download</a>
   </div>
-  <div id="viewer"><canvas id="canvas"></canvas></div>
+
+  <div id="viewer">
+    <div id="pageContainer" class="page">
+      <canvas id="canvas"></canvas>
+      <div id="annLayer" class="annotationLayer"></div>
+    </div>
+  </div>
 
   <script type="module">
     import { GlobalWorkerOptions, getDocument } from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.mjs";
-    GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.mjs";
+    import { AnnotationLayer, PDFLinkService, EventBus, LinkTarget }
+      from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/web/pdf_viewer.mjs";
+
+    GlobalWorkerOptions.workerSrc =
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.mjs";
 
     const qs = new URLSearchParams(location.search);
     const fileURL = qs.get('file');
-    if (!fileURL) {
-      alert('Missing ?file=… parameter');
-      throw new Error('No file param');
-    }
+    if (!fileURL) { alert('Missing ?file=… parameter'); throw new Error('No file param'); }
 
     const canvas = document.getElementById('canvas');
+    const annDiv = document.getElementById('annLayer');
+    const pageContainer = document.getElementById('pageContainer');
     const ctx = canvas.getContext('2d');
     const pageInfo = document.getElementById('pageInfo');
     const prevBtn = document.getElementById('prev');
@@ -62,12 +80,17 @@
 
     let pdf, page = 1, scale = 1.0, baseWidth = null, rendering = false;
 
+    // Link service makes internal/external PDF links work
+    const eventBus = new EventBus();
+    const linkService = new PDFLinkService({ eventBus });
+    linkService.externalLinkTarget = LinkTarget.BLANK; // open external links in a new tab
+    linkService.externalLinkRel = "noopener noreferrer";
+
     function updatePageInfo() {
       pageInfo.textContent = `${page} / ${pdf ? pdf.numPages : '–'}`;
     }
-
     function getFitScale(vpWidth) {
-      const pad = 24; // padding
+      const pad = 24;
       const w = Math.min(document.documentElement.clientWidth, window.innerWidth) - pad;
       return Math.max(0.2, Math.min(3, w / vpWidth));
     }
@@ -75,18 +98,39 @@
     async function render() {
       if (!pdf || rendering) return;
       rendering = true;
+
       const p = await pdf.getPage(page);
       const vp1 = p.getViewport({ scale: 1 });
       if (baseWidth == null) baseWidth = vp1.width;
 
+      const targetScale = scale;
+      const vp = p.getViewport({ scale: targetScale });
+
+      // Size canvas at device pixels, but CSS sizes match viewport to align the overlay
       const ratio = window.devicePixelRatio || 1;
-      const vp = p.getViewport({ scale });
       canvas.width = Math.floor(vp.width * ratio);
       canvas.height = Math.floor(vp.height * ratio);
       canvas.style.width = Math.floor(vp.width) + 'px';
       canvas.style.height = Math.floor(vp.height) + 'px';
+      pageContainer.style.width = canvas.style.width;
+      pageContainer.style.height = canvas.style.height;
+
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       await p.render({ canvasContext: ctx, viewport: vp }).promise;
+
+      // Render annotation (links!) overlay
+      annDiv.innerHTML = ""; // clear previous page's annotations
+      const annotations = await p.getAnnotations({ intent: "display" });
+      await AnnotationLayer.render({
+        annotations,
+        div: annDiv,
+        page: p,
+        viewport: vp,
+        linkService,
+        renderForms: false,
+        enableScripting: false,
+      });
+
       updatePageInfo();
       rendering = false;
     }
@@ -94,6 +138,8 @@
     async function init() {
       const task = getDocument({ url: fileURL });
       pdf = await task.promise;
+      linkService.setDocument(pdf);
+
       const first = await pdf.getPage(1);
       const vp1 = first.getViewport({ scale: 1 });
       baseWidth = vp1.width;
@@ -118,7 +164,7 @@
     zoomOutBtn.addEventListener('click', zoomOut);
     fitBtn.addEventListener('click', fit);
     fsBtn.addEventListener('click', fsToggle);
-    window.addEventListener('resize', fit);
+    window.addEventListener('resize', () => { fit(); });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight' || e.code === 'Space') { e.preventDefault(); next(); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
