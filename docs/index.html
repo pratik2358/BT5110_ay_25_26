@@ -25,7 +25,7 @@ NOTE: No build step needed. Everything runs client-side on GitHub Pages.
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PDF Slides</title>
+  <title>BT5110 Tutorial slides</title>
   <style>
     :root {
       --maxw: 1100px;
@@ -52,7 +52,7 @@ NOTE: No build step needed. Everything runs client-side on GitHub Pages.
 </head>
 <body>
   <header>
-    <h1>PDF Slides</h1>
+    <h1>Tutorial Slides</h1>
     <div class="muted">Click a card to open the slide viewer. Keyboard: ←/→ or space for nav, <code>f</code> for fullscreen.</div>
   </header>
 
@@ -66,14 +66,17 @@ NOTE: No build step needed. Everything runs client-side on GitHub Pages.
   <script type="module">
     // ======== CONFIG — change these to match your repo ========
     const OWNER = "pratik2358";           // your GitHub username (already known)
-    const REPO  = "BT5110_ay_25_26";            // <-- set to your repository name
+    const REPO  = "REPO_NAME";            // <-- set to your repository name
     const BRANCH = "main";                // default branch
     const PDF_PATH = "slides";            // folder containing PDFs
     // Optional manual list (used if API listing fails or repo is private)
     const MANUAL_PDFS = [
-      // Example:
-      // { name: "lecture1.pdf", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/lecture1.pdf` },
-    ];
+  { name: "tut_01.pdf", title: "Tutorial 01", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_01.pdf` },
+  { name: "tut_02.pdf", title: "Tutorial 02", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_02.pdf` },
+  { name: "tut_03.pdf", title: "Tutorial 03", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_03.pdf` },
+  { name: "tut_04.pdf", title: "Tutorial 04", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_04.pdf` },
+  { name: "tut_06.pdf", title: "Tutorial 06", url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PDF_PATH}/tut_06.pdf` },
+];
 
     // ======== Helper: build API + raw URLs ========
     const apiURL  = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PDF_PATH}?ref=${BRANCH}`;
@@ -120,32 +123,44 @@ NOTE: No build step needed. Everything runs client-side on GitHub Pages.
       }
     }
 
-    function card({ name, url }) {
-      const a = document.createElement('a');
-      a.className = 'card';
-      a.href = viewURL(url);
-      a.setAttribute('aria-label', name);
+    function card({ name, url, title }) {
+  const a = document.createElement('a');
+  a.className = 'card';
+  a.href = viewURL(url);
+  a.setAttribute('aria-label', title || name);
 
-      const thumb = document.createElement('div');
-      thumb.className = 'thumb';
-      const canvas = document.createElement('canvas');
-      thumb.appendChild(canvas);
+  const thumb = document.createElement('div');
+  thumb.className = 'thumb';
+  const canvas = document.createElement('canvas');
+  thumb.appendChild(canvas);
 
-      const caption = document.createElement('div');
-      caption.className = 'caption';
-      caption.textContent = name;
+  const caption = document.createElement('div');
+  caption.className = 'caption';
+  caption.textContent = title || name;
 
-      a.appendChild(thumb); a.appendChild(caption);
-      grid.appendChild(a);
-      renderThumb(canvas, url);
-    }
+  a.appendChild(thumb); a.appendChild(caption);
+  grid.appendChild(a);
+  renderThumb(canvas, url);
+}
 
     async function main() {
-      let files = [];
-      try {
-        files = await fetchPDFsViaAPI();
-        if (files.length === 0 && MANUAL_PDFS.length === 0) throw new Error("No PDFs found in the folder.");
-      } catch (e) {
+  let files = [];
+  if (MANUAL_PDFS.length > 0) {
+    files = MANUAL_PDFS;
+  } else {
+    try {
+      files = await fetchPDFsViaAPI();
+      if (files.length === 0) throw new Error("No PDFs found in the folder.");
+    } catch (e) {
+      err.style.display = '';
+      err.textContent = `Could not list PDFs via API: ${e.message}. If this is a private repo, either make it public, or fill MANUAL_PDFS in index.html.`;
+      return;
+    }
+  }
+  // ensure expected order tut_01..tut_06
+  files.sort((a,b)=> (a.name||'').localeCompare(b.name||''));
+  files.forEach(card);
+} catch (e) {
         if (MANUAL_PDFS.length > 0) {
           files = MANUAL_PDFS;
         } else {
