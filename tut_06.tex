@@ -125,6 +125,32 @@ We’ll present \textbf{equivalent} formulations (e.g., CROSS JOIN vs INNER JOIN
 \end{frame}
 \section{Solutions}
 
+\begin{frame}[fragile]{Creating the Database}
+    \begin{figure}
+        \centering
+        \includegraphics[width=1\linewidth]{schema_t6.pdf}
+        \caption{\texttt{student} and \texttt{book} are independent tables (relations). \texttt{copy} relies on \texttt{student} for its \texttt{owner} attribute and on \texttt{book} for its \texttt{book} attribute. \texttt{loan} relies on copy for \texttt{(owner, book, copy)} attributes and on \texttt{student} for its \texttt{borrower} attribute.}
+        \label{fig:depend}
+    \end{figure}
+\end{frame}
+
+\begin{frame}[fragile]{Creating the Database}
+    From Figure~\ref{fig:depend} it is clear that we need to populate either the \texttt{student} table or the \texttt{book} table first. Then we should populate \texttt{copy} and \texttt{loan} should be the last. \\
+    \pause
+    \scriptsize
+    \alert{How would you find the order when the number of tables (relations) is much higher and have complex set of dependencies?}\\
+    \pause
+    \normalsize
+    In \texttt{psql} run\footnote{The order of \texttt{NUNStAStudent.sql} and \texttt{NUNStABook.sql} are interchangeable.}:
+    \begin{lstlisting}
+        \i NUNStAStudent.sql;
+        \i NUNStABook.sql;
+        \i NUNStACopy.sql;
+        \i NUNStALoan.sql;
+    \end{lstlisting}
+Your database is now ready\footnote{You need to be in the same directory of these files for these to run. Otherwise provide the entire file paths after \texttt{\textbackslash i}.}.\\
+\end{frame}
+
 \begin{frame}[fragile]{1(a).\ Different departments (single table)}
 \small
 \textbf{Good practice:} alias tables; refer to columns via the alias.
@@ -156,7 +182,7 @@ ORDER BY l.book ASC, duration DESC;
 \end{frame}
 
 \begin{frame}[fragile]{1(c).\ Loan duration including unreturned}
-\small\itshape Using COALESCE
+\small Using COALESCE
 \begin{lstlisting}[style=sqlcompact]
 SELECT l.book,
        (COALESCE(l.returned, CURRENT_DATE)
@@ -165,7 +191,7 @@ FROM loan AS l
 ORDER BY l.book ASC, duration DESC;
 \end{lstlisting}
 
-\medskip\itshape Using CASE
+\medskip Using CASE
 \begin{lstlisting}[style=sqlcompact]
 SELECT l.book,
        ((CASE WHEN l.returned IS NULL
