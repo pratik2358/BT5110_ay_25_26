@@ -138,7 +138,7 @@ We’ll present \textbf{equivalent} formulations (e.g., CROSS JOIN vs INNER JOIN
     From Figure~\ref{fig:depend} it is clear that we need to populate either the \texttt{student} table or the \texttt{book} table first. Then we should populate \texttt{copy} and \texttt{loan} should be the last. \\
     \pause
     \scriptsize
-    \alert{How would you find the order when the number of tables (relations) is much higher and have complex set of dependencies?}\\
+    \alert{How would you find the order when the number of tables (relations) is much higher and have complex set of dependencies?} \pause \textcolor{blue}{Use Topological Sorting}\\
     \pause
     \normalsize
     In \texttt{psql} run\footnote{The order of \texttt{NUNStAStudent.sql} and \texttt{NUNStABook.sql} are interchangeable.}:
