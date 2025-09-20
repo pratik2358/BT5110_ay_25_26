@@ -259,83 +259,91 @@ Thus the result is in BCNF. \alert{(This is not a general case though. There is 
 
 \begin{frame}{Dependency Projection Algorithm}
 \begin{algorithm}[H]
-\small
-\caption{Dependency Projection Algorithm\footnote{\href{https://github.com/pratik2358/fucntional_dep/blob/main/functional_deps.ipynb}
-{\textcolor{blue}{Link to code$\to$ Cell 1:} \textcolor{red}{project\_dependency}}}}
+\scriptsize
+\caption{Computing FD Projections (closure-based)}
 \label{algorithm:algo}
+\label{alg:fd-projection-closures}
 \begin{algorithmic}[1]
-\REQUIRE $\Sigma$: Set of functional dependencies
-\REQUIRE $R'$: Set of attributes to project on
-\ENSURE $\Sigma'$: Projected set of functional dependencies
-
-\STATE Initialize $\Sigma' \gets \emptyset$
-\FOR{$\text{each }(lhs\to rhs) \text{ in } \Sigma$}
-    \IF{$lhs \text{ is a subset of } R'$}
-        \STATE $y \gets rhs \cap R'$
-        \IF{$y \text{ is not empty}$}
-            \STATE $\Sigma' \gets \Sigma' \cup \{\{\text{lhs} \to y\}\}$
-        \ENDIF
-    \ENDIF
+\REQUIRE $G$ : set of functional dependencies on schema $R$
+\REQUIRE $R' \subseteq R$ : attribute set to project onto
+\ENSURE $G_{R'}$ : projection of $G$ onto $R'$
+\STATE $G_{R'} \gets \varnothing$
+\FORALL{$Y \subseteq R'$}
+    \STATE $T \gets \textsc{Closure}(Y,\; G)$ \hfill// compute $Y^+$ w.r.t.\ $G$
+    \STATE $H \gets T \cap X$
+    \STATE $G_{R'} \gets G_{R'} \cup \{\, Y \to H \,\}$ \hfill// optionally emit unit FDs: $\{\,Y\to A \mid A \in H\setminus Y\,\}$
 \ENDFOR
-\RETURN $\Sigma'$
+\STATE \textbf{return} $G_X$
 \end{algorithmic}
 \end{algorithm}
+
 \end{frame}
 
 \begin{frame}[fragile]{Dependency Projection Example}
 \scriptsize
 \begin{columns}
-    \begin{column}{0.3\textwidth}
-        $R = \{A,B,C,D,E\}$\\
-\vspace{0.2cm}
-$\Sigma =\\ \{ \{ A \} \to \{ A, B, C \},\\ \{ A, B \} \to \{ A \},\\ \{ B, C \} \to \{ A, D \},\\ \{ B \} \to \{ A, B \},\\ \{ C \} \to \{ D \} \}$\\
-\vspace{0.2cm}
-$R' = \{A,B,C\}$
-    \end{column}
-    \begin{column}{0.7\textwidth}
-    \pause
+  \begin{column}{0.3\textwidth}
+    $R=\{A,B,C,D,E\}$\\[0.2cm]
+    $\Sigma=\{\ \{A\}\!\to\!\{A,B,C\},\ \{A,B\}\!\to\!\{A\},\ \{B,C\}\!\to\!\{A,D\},\ \{B\}\!\to\!\{A,B\},\ \{C\}\!\to\!\{D\}\ \}$\\[0.2cm]
+    $R'=\{A,B,C\}$
+  \end{column}
+  \begin{column}{0.7\textwidth}
     \tiny
-    $\Sigma' = \emptyset$\\
-    \vspace{0.1cm}
-    \pause
-        \textcolor{blue}{$\{A\}\to \{A,B,C\}$}\\
-        $lhs = \{A\} \text{ is a subset of } R'$\\
-        $rhs = \{A,B,C\}\\
-        y = rhs \cap R' = \{A,B,C\}\cap\{A,B,C\} = \{A,B,C\} \neq \emptyset$\\
-        $\Sigma' = \{\{A\}\to \{A,B,C\}\}$\\
-        \vspace{0.1cm}
-    \pause
-    \textcolor{blue}{$\{A,B\} \to \{A\}$}\\
-    $lhs = \{A,B\} \text{ is a subset of } R'$\\
-    $rhs = \{A\}\\
-    y = rhs \cap R' = \{A\}\cap\{A,B,C\} = \{A\} \neq \emptyset$\\
-    $\Sigma' = \{\{A\}\to \{A,B,C\}, \{A,B\} \to \{A\}\}$\\
-    \vspace{0.1cm}
-    \pause
-    \textcolor{blue}{$\{B,C\} \to \{A,D\}$}\\
-    $lhs = \{B,C\} \text{ is a subset of } R'$\\
-    $rhs = \{A,D\}\\
-    y = rhs \cap R' = \{A,D\}\cap\{A,B,C\} = \{A\} \neq \emptyset$\\
-    $\Sigma' = \{\{A\}\to \{A,B,C\}, \{A,B\} \to \{A\}, \{B,C\} \to \{A\}\}$\\
-    \vspace{0.1cm}
-    \pause
-    \textcolor{blue}{$\{B\} \to \{A,B\}$}\\
-    $lhs = \{B\} \text{ is a subset of } R'$\\
-    $rhs = \{A,B\}\\
-    y = rhs \cap R' = \{A,B\}\cap\{A,B,C\} = \{A,B\} \neq \emptyset$\\
-    $\Sigma' = \{\{A\}\to \{A,B,C\}, \{A,B\} \to \{A\}, \{B,C\} \to \{A\}, \{B\} \to \{A,B\}\}$\\
-    \vspace{0.1cm}
-    \pause
-    \textcolor{blue}{$\{C\} \to \{D\}$}\\
-    $lhs = \{C\} \text{ is a subset of } R'$\\
-    $rhs = \{D\}\\
-    y = rhs \cap R' = \{D\}\cap\{A,B,C\} = \emptyset$\\
-    \vspace{0.1cm}
-    \pause
-    \textcolor{red}{$\Sigma' = \{\{A\}\to \{A,B,C\}, \{A,B\} \to \{A\}, \{B,C\} \to \{A\}, \{B\} \to \{A,B\}\}$}
-    \end{column}
+    $\Sigma' \gets \emptyset$\\[2pt]\pause
+
+    \textcolor{blue}{$Y=\{A\}$} \\
+    $T=Y^+ \ (\text{w.r.t. }\Sigma)=\{A,B,C,D\}$,\quad $H=T\cap R'=\{A,B,C\}$\\
+    $\Sigma' \gets \Sigma' \cup \{\{A\}\to\{A,B,C\}\}$\\[4pt]\pause
+
+    \textcolor{blue}{$Y=\{B\}$} \\
+    $T=\{A,B,C,D\}$,\quad $H=\{A,B,C\}$\\
+    $\Sigma' \gets \Sigma' \cup \{\{B\}\to\{A,B,C\}\}$\\[4pt]\pause
+
+    \textcolor{blue}{$Y=\{C\}$} \\
+    $T=\{C,D\}$,\quad $H=\{C\}$\\
+    $\Sigma' \gets \Sigma' \cup \{\{C\}\to\{C\}\}$\\[4pt]\pause
+
+    \textcolor{blue}{$Y=\{A,B\}$} \\
+    $T=\{A,B,C,D\}$,\quad $H=\{A,B,C\}$\\
+    $\Sigma' \gets \Sigma' \cup \{\{A,B\}\to\{A,B,C\}\}$\\[4pt]\pause
+
+    \textcolor{blue}{$Y=\{A,C\}$} \\
+    $T=\{A,B,C,D\}$,\quad $H=\{A,B,C\}$\\
+    $\Sigma' \gets \Sigma' \cup \{\{A,C\}\to\{A,B,C\}\}$\\[4pt]\pause
+
+    \textcolor{blue}{$Y=\{B,C\}$} \\
+    $T=\{A,B,C,D\}$,\quad $H=\{A,B,C\}$\\
+    $\Sigma' \gets \Sigma' \cup \{\{B,C\}\to\{A,B,C\}\}$\\[4pt]\pause
+
+    \textcolor{blue}{$Y=\{A,B,C\}$} \\
+    $T=\{A,B,C,D\}$,\quad $H=\{A,B,C\}$\\
+    $\Sigma' \gets \Sigma' \cup \{\{A,B,C\}\to\{A,B,C\}\}$
+  \end{column}
 \end{columns}
 \end{frame}
+
+\begin{frame}{Dependency Projection Example (Contd.)}
+\textcolor{red}{$\displaystyle
+      \Sigma'=\big\{
+        \{A\}\!\to\!\{A,B,C\},\
+        \{B\}\!\to\!\{A,B,C\},\
+        \{C\}\!\to\!\{C\},\
+        \{A,B\}\!\to\!\{A,B,C\},\
+        \{A,C\}\!\to\!\{A,B,C\},\
+        \{B,C\}\!\to\!\{A,B,C\},\
+        \{A,B,C\}\!\to\!\{A,B,C\}
+      \big\}.
+    $}\\
+    In the last step, reduce the redundancies from $\Sigma'$:\\
+    \textcolor{red}{$\displaystyle
+      \Sigma'=\big\{
+        \{A\}\!\to\!\{B,C\},\
+        \{B\}\!\to\!\{A\}
+      \big\}.
+    $}\\
+    Notice that in this case you could stop after finding the closures of $A$ and $B$ as $\{A\}^+ = R$ and $\{B\}^+ = R$, and all other subsets of $R$ contain either $A$ or $B$.
+\end{frame}
+
 \section{Overview}
 \begin{frame}{Overview}
 \begin{center}
