@@ -270,7 +270,7 @@ Thus the result is in BCNF. \alert{(This is not a general case though. There is 
 \STATE $G_{R'} \gets \varnothing$
 \FORALL{$Y \subseteq R'$}
     \STATE $T \gets \textsc{Closure}(Y,\; G)$ \hfill// compute $Y^+$ w.r.t.\ $G$
-    \STATE $H \gets T \cap X$
+    \STATE $H \gets T \cap R'$
     \STATE $G_{R'} \gets G_{R'} \cup \{\, Y \to H \,\}$ \hfill// optionally emit unit FDs: $\{\,Y\to A \mid A \in H\setminus Y\,\}$
 \ENDFOR
 \STATE \textbf{return} $G_X$
