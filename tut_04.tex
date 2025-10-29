@@ -264,16 +264,16 @@ Thus the result is in BCNF. \alert{(This is not a general case though. There is 
 \label{algorithm:algo}
 \label{alg:fd-projection-closures}
 \begin{algorithmic}[1]
-\REQUIRE $G$ : set of functional dependencies on schema $R$
+\REQUIRE $\Sigma$ : set of functional dependencies on schema $R$
 \REQUIRE $R' \subseteq R$ : attribute set to project onto
-\ENSURE $G_{R'}$ : projection of $G$ onto $R'$
-\STATE $G_{R'} \gets \varnothing$
+\ENSURE $\Sigma'$ : projection of $\Sigma$ onto $R'$
+\STATE $\Sigma' \gets \varnothing$
 \FORALL{$Y \subseteq R'$}
-    \STATE $T \gets \textsc{Closure}(Y,\; G)$ \hfill// compute $Y^+$ w.r.t.\ $G$
+    \STATE $T \gets \textsc{Closure}(Y,\; \Sigma)$ \hfill// compute $Y^+$ w.r.t.\ $\Sigma$
     \STATE $H \gets T \cap R'$
-    \STATE $G_{R'} \gets G_{R'} \cup \{\, Y \to H \,\}$ \hfill// optionally emit unit FDs: $\{\,Y\to A \mid A \in H\setminus Y\,\}$
+    \STATE $\Sigma' \gets \Sigma' \cup \{\, Y \to H \,\}$ \hfill// optionally emit unit FDs: $\{\,Y\to A \mid A \in H\setminus Y\,\}$
 \ENDFOR
-\STATE \textbf{return} $G_X$
+\STATE \textbf{return} $\Sigma'$
 \end{algorithmic}
 \end{algorithm}
 
